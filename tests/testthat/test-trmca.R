@@ -31,11 +31,8 @@ test_that("Single TMRCA call", {
     ),
     row.names = c(NA,-6L),
     class = "data.frame"
+    )
   )
-  ),
-    row.names = c(NA,-6L),
-    class = "data.frame"
-  ))
 
 })
 
@@ -54,54 +51,74 @@ test_that("Looped TMRCA call", {
 
   out = tmrca(trees, states)
 
+  expect_equal(unique(out$Node), c("56", "59", "62", "67", "76", "77"))
+
 })
 
-trees = rep(tree, 10)
-tic()
-test = tmrca(trees, states)
-toc()
+test_that("tmrca is faster than Ray's code", {
+  set.seed(1234)
+  tree = ape::rcoal(40, br = runif)
+  tree$tip.label = paste0(tree$tip.label, "_", states)
+  states = ape::rTraitDisc(tree)
 
-tic()
-#loop over each tree
-I <- 0
-mono.dates <- foreach(tree = trees, .combine=rbind) %do% {
-  I <- I + 1
-  print(names(trees)[I])
+  trees = rep(tree, 10)
+  class(trees) = "multiPhylo"
 
-  #get monophyletic clades
-  all.sub.trees <- clade.members.list(phy=tree, tip.labels=T)
-  tip.states <- lapply(all.sub.trees, function(x) sapply(strsplit(x, "_"), "[", 3))
-  samples <- lapply(all.sub.trees, function(x) sapply(strsplit(x, "_"), "[", 1))
-  clades <- sapply(tip.states, function(x) length(unique(x))==1)
-  clade.tips <- all.sub.trees[which(clades==T)]
+  tictoc::tic()
+  test = tmrca(trees, states)
+  new_func = tictoc::toc()
 
-  #node dates
-  node.height <- nodeHeights(tree)
-  tree.height <- max(node.height)
-  nh <- data.table(Node=c(tree$edge[, 1], tree$edge[, 2]),
-                   Date=c(round(tree.height - node.height[, 1], 3),
-                          round(tree.height - node.height[, 2], 3)))
-  nh <- nh[!duplicated(Node)]
+  library(foreach)
+  library(data.table)
 
-  #find largest clades
-  l <- length(clade.tips)
-  L <- names(clade.tips)
-  j <- L[1]
-  node.mat <- NULL
-  while(length(L)>0){
-    c.now <- clade.tips[[which(names(clade.tips)==j)]]
-    ol <- sapply(clade.tips, function(x){length(intersect(c.now, x))})
-    clade.remove <- as.numeric(names(ol[ol>0]))
-    big.clade <- as.numeric(names(ol[ol==max(ol)]))
-    out <- data.table(Tree=names(trees)[I], nh[Node==big.clade],
-                      #State=unique(ts.now), N.tips=length(ts.now),
-                      State=unique(c.now), N.tips=length(c.now),
-                      tips=paste(sort(samples[[which(names(samples)==big.clade)]]),
-                                 collapse=","))
-    node.mat <- rbind(node.mat, out)
-    L <- setdiff(L, clade.remove)
+
+  tictoc::tic()
+  #loop over each tree
+  I <- 0
+  mono.dates <- foreach(tree = trees, .combine=rbind) %do% {
+    I <- I + 1
+
+    #get monophyletic clades
+    all.sub.trees <- caper::clade.members.list(phy=tree, tip.labels=T)
+    tip.states <- lapply(all.sub.trees, function(x) sapply(strsplit(x, "_"), "[", 2))
+    samples <- lapply(all.sub.trees, function(x) sapply(strsplit(x, "_"), "[", 1))
+    clades <- sapply(tip.states, function(x) length(unique(x))==1)
+    clade.tips <- all.sub.trees[which(clades==T)]
+
+    #node dates
+    node.height <- phytools::nodeHeights(tree)
+    tree.height <- max(node.height)
+    nh <- data.table(Node=c(tree$edge[, 1], tree$edge[, 2]),
+                     Date=c(round(tree.height - node.height[, 1], 3),
+                            round(tree.height - node.height[, 2], 3)))
+    nh <- nh[!duplicated(Node)]
+
+    #find largest clades
+    l <- length(clade.tips)
+    L <- names(clade.tips)
     j <- L[1]
+    node.mat <- NULL
+    while(length(L)>0){
+      c.now <- clade.tips[[which(names(clade.tips)==j)]]
+      ol <- sapply(clade.tips, function(x){length(intersect(c.now, x))})
+      clade.remove <- as.numeric(names(ol[ol>0]))
+      big.clade <- as.numeric(names(ol[ol==max(ol)]))
+      out <- data.table(Tree=names(trees)[I], nh[Node==big.clade],
+                        #State=unique(ts.now), N.tips=length(ts.now),
+                        State=unique(c.now), N.tips=length(c.now),
+                        tips=paste(sort(samples[[which(names(samples)==big.clade)]]),
+                                   collapse=","))
+      node.mat <- rbind(node.mat, out)
+      L <- setdiff(L, clade.remove)
+      j <- L[1]
+    }
+    node.mat
   }
-  node.mat
-}
-toc()
+  old_func = tictoc::toc()
+
+  cat("new function is ", (old_func$toc - old_func$tic) - (new_func$toc - new_func$tic), "s faster")
+  expect_lte(new_func$toc - new_func$tic, old_func$toc - old_func$tic)
+
+  expect_equal(as.character(unique(node.mat$Node)), unique(test$Node))
+
+})
