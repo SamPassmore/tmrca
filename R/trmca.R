@@ -40,6 +40,14 @@
   dates
 }
 
+#' Calculate the Time since Most Recent Common Ancestor across a tree posterior
+#'
+#' @param trees a phylogeny or posterior of phylogeny of class phylo or multiphylo
+#' @param states a named vector of states to calculate clades from. Names must match tips.
+#'
+#' @return a data.frame containing the dates of the MRCA of state clades for each tree in the posterior
+#'
+
 tmrca = function(trees, states){
 
   if(!class(trees) %in% c("phylo", "multiPhylo")){
