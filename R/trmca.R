@@ -1,3 +1,15 @@
+#' Calculate Time since Most Recent Common Ancestor for one tree
+#'
+#'@description
+#'This function is for internal use only.
+#'
+#'
+#' @param tree a single phylogeny of class phylo
+#' @param states a named vector of states to calculate clades from. Names must match tips.
+#'
+#' @return
+#' @export
+#'
 .tmrca_onetree = function(tree, states){
   # Find all clades
   all.sub.trees = caper::clade.members.list(phy = tree, tip.labels = TRUE)
@@ -47,6 +59,7 @@
 #'
 #' @return a data.frame containing the dates of the MRCA of state clades for each tree in the posterior
 #'
+#'@export
 
 tmrca = function(trees, states){
 
