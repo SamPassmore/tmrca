@@ -49,7 +49,7 @@
 
   # Tips must be sorted, because they may arise in different orders, but the same clade, in different trees
   dates$tips = sapply(common_clades[as.character(dates$Node)], function(x){
-    x = sort(x)
+    x = sort(x, na.last = TRUE)
     paste(x, collapse = "; ")
   })
 
