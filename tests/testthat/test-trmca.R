@@ -16,11 +16,11 @@ test_that("Single TMRCA call", {
                  6L, 8L, 4L, 2L, 2L),
       tips = c(
         "t19; t22",
-        "t12; t8; t27; t33; t3; t20",
-        "t18; t25; t11; t5; t26; t28; t10; t38",
-        "t32; t31; t35; t7",
+        "t12; t20; t27; t3; t33; t8",
+        "t10; t11; t18; t25; t26; t28; t38; t5",
+        "t31; t32; t35; t7",
         "t21; t39",
-        "t6; t34"
+        "t34; t6"
       ),
       state = structure(
         c(2L, 1L, 1L, 2L,

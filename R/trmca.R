@@ -46,7 +46,13 @@
 
   dates = dplyr::left_join(data.frame(Node = clades_ofinterest), nh, by = "Node")
   dates$n_tips = sapply(common_clades[as.character(dates$Node)], length)
-  dates$tips = sapply(common_clades[as.character(dates$Node)], paste, collapse = "; ")
+
+  # Tips must be sorted, because they may arise in different orders, but the same clade, in different trees
+  dates$tips = sapply(common_clades[as.character(dates$Node)], function(x){
+    x = sort(x)
+    paste(x, collapse = "; ")
+  })
+
   dates$state = sapply(common_clades[as.character(dates$Node)], function(x) unique(states[x]))
 
   dates
