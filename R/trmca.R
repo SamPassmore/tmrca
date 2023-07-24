@@ -7,7 +7,7 @@
 #' @param tree a single phylogeny of class phylo
 #' @param states a named vector of states to calculate clades from. Names must match tips.
 #'
-#' @return
+#' @return a data.frame containing information on the identified clades, the state they contain, and the tree they are from.
 #' @export
 #'
 .tmrca_onetree = function(tree, states){
@@ -67,7 +67,7 @@
 #'
 #'@export
 
-tmrca = function(trees, states){
+tmrca = function(trees, states, progress = TRUE){
 
   if(!class(trees) %in% c("phylo", "multiPhylo")){
     stop("trees must be a phylo or multiPhylo class")
@@ -81,8 +81,13 @@ tmrca = function(trees, states){
     names(trees) = seq_along(trees)
   }
 
-  nodes_dates = lapply(trees, function(t) .tmrca_onetree(t, states = states))
-  node_dates = dplyr::bind_rows(nodes_dates, .id = "TREE")
+  if(progress){
+    nodes_dates = pbapply::pblapply(trees, function(t) .tmrca_onetree(t, states = states))
+    node_dates = dplyr::bind_rows(nodes_dates, .id = "TREE")
+  } else {
+    nodes_dates = lapply(trees, function(t) .tmrca_onetree(t, states = states))
+    node_dates = dplyr::bind_rows(nodes_dates, .id = "TREE")
+  }
 
   node_dates
 }

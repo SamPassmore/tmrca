@@ -7,7 +7,9 @@
 .tmrca_onetree(tree, states)
 }
 \arguments{
-\item{states}{}
+\item{tree}{a single phylogeny of class phylo}
+
+\item{states}{a named vector of states to calculate clades from. Names must match tips.}
 }
 \description{
 This function is for internal use only.

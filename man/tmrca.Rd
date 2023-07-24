@@ -4,7 +4,7 @@
 \alias{tmrca}
 \title{Calculate the Time since Most Recent Common Ancestor across a tree posterior}
 \usage{
-tmrca(trees, states)
+tmrca(trees, states, progress = TRUE)
 }
 \arguments{
 \item{trees}{a phylogeny or posterior of phylogeny of class phylo or multiphylo}
